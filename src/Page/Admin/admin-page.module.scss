@@ -1,0 +1,80 @@
+.root {
+  margin-top: 80px;
+  margin-left: 5%;
+  margin-right: 5%;
+
+  .title {
+    text-align: center;
+    font-size: xx-large;
+    margin-bottom: 20px;
+  }
+
+  .subTitle {
+    text-align: center;
+    font-size: x-large;
+    margin-bottom: 20px;
+  }
+
+  .post {
+    margin-bottom: 40px;
+  }
+
+  .form {
+    .formSelect {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 40px;
+
+      .currentlyDisplayed {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 20px;
+
+        .displayedHelper {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          margin-right: 20px;
+        }
+
+        .displayedTitle {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+
+        .clearButton {
+          margin-left: 20px;
+        }
+      }
+
+      .selectNewForm {
+        display: flex;
+        flex-direction: row;
+
+        .updateButton {
+          margin-left: 20px;
+        }
+
+        .updateStatus {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          margin-left: 20px;
+        }
+      }
+    }
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+
+    .button {
+      margin-left: 20px;
+    }
+  }
+}

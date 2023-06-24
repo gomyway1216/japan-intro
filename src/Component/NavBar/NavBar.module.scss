@@ -1,0 +1,55 @@
+.root {
+  .navBar {
+    background-color: green;
+
+    .loginButton {
+      color: white;
+      border-color: white;
+    }
+
+    .searchField2 {
+      background-color: white;
+      border-color: white;
+      
+      opacity: 0.15;
+      height: 40%;
+      color: white;
+
+      .MuiInputBase-input {
+        color: white;
+      }
+    }
+
+    .searchAutoComplete {
+      color: white;
+      border-color: white;
+
+      .searchField {
+        background-color: white;
+        border-color: white;
+        
+        opacity: 0.15;
+        height: 40%;
+        color: white;
+
+        .MuiInputBase-input {
+          color: white;
+        }
+      }
+
+      & .MuiInputBase-input {
+        color: white;
+      }
+
+      .MuiInputBase-input {
+        color: white;
+        font-weight: bold;
+      }
+  
+      .searchField:hover {
+        opacity: 0.25;
+      }
+    }
+
+  }
+}
