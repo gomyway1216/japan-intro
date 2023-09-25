@@ -20,10 +20,12 @@ const DataTable: FC<DataTableProps> = (props) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [deleteDataId, setDeleteDataId] = useState('');
+  const [deleteDataCategory, setDeleteDataCategory] = useState('');
   const navigate = useNavigate();
 
   const columns = [
     { field: 'title', headerName: 'Title', flex: 1 },
+    { field: 'category', headerName: 'Category', flex: 1 },
     {
       field: 'created',
       headerName: 'Created',
@@ -60,7 +62,7 @@ const DataTable: FC<DataTableProps> = (props) => {
           // store the checked state as map can not access new value 
           setLoading(true);
           const checked = e.target.checked;
-          const updateStatus = await props.togglePublish(params.row.id, checked);
+          const updateStatus = await props.togglePublish(params.row.id, params.row.category, checked);
           if (updateStatus) {
             const newState = data.map(value => {
               if (value.id === params.row.id) {
@@ -98,9 +100,9 @@ const DataTable: FC<DataTableProps> = (props) => {
         const onClick = (e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation(); // don't select this row after clicking
           // open editor
-          navigate('/' + props.editLink + '/' + params.row.id);
+          // navigate('/' + props.editLink + '/' + params.row.id);
+          navigate(`/${params.row.category}/${params.row.id}/edit`);
         };
-
         return (
           <Tooltip title="edit">
             <IconButton aria-label="edit" onClick={onClick} color="primary">
@@ -120,6 +122,7 @@ const DataTable: FC<DataTableProps> = (props) => {
           e.stopPropagation(); // don't select this row after clicking
           // open dialog to confirm delete
           setDeleteDataId(params.row.id);
+          setDeleteDataCategory(params.row.category);
           setDeleteDialogOpen(true);
         };
 
@@ -145,7 +148,7 @@ const DataTable: FC<DataTableProps> = (props) => {
   // this if block hs logical change from original one
   const handleDelete = async () => {
     setLoading(true);
-    const deleteStatus = await props.deleteData(deleteDataId);
+    const deleteStatus = await props.deleteData(deleteDataId, deleteDataCategory);
     if (deleteStatus) {
       const newState = data.filter(value => value.id !== deleteDataId);
       setData(newState);

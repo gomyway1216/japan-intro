@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import * as postApi from '../../api/post';
 import DataTable from '../../Component/Table/DataTable';
 import styles from './admin-page.module.scss';
-import { TabPanelProps } from '../../types';
+import { Post, TabPanelProps } from '../../types';
 
 
 const TabPanel = ({ children, value, index, ...other }: TabPanelProps) => {
@@ -35,7 +35,7 @@ const a11yProps = (index: number) => {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState<Array<any>>([]);
+  const [posts, setPosts] = useState<Array<Post>>([]);
   const [tabValue, setTabValue] = useState(0);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -43,7 +43,8 @@ const AdminPage: React.FC = () => {
   };
 
   const getPosts = async () => {
-    const ps = await postApi.getPosts(0);
+    // const ps = await postApi.getPosts(0);
+    const ps = await postApi.getAllCategoryPosts();
     setPosts(ps);
   };
 
@@ -52,11 +53,11 @@ const AdminPage: React.FC = () => {
     setLoading(false);
   }, []);
 
-  const handleCreatePost = async () => {
-    // create the post and get id for the post so that post page can do auto saving with the id
-    const docId = await postApi.createPost();
-    navigate('/edit-post/' + docId);
-  };
+  // const handleCreatePost = async () => {
+  //   // create the post and get id for the post so that post page can do auto saving with the id
+  //   const docId = await postApi.createPost();
+  //   navigate('/edit-post/' + docId);
+  // };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -65,10 +66,10 @@ const AdminPage: React.FC = () => {
   return (
     <div className={styles.root}>
       <div className={styles.title}>AdminPage</div>
-      <div className={styles.buttons}>
+      {/* <div className={styles.buttons}>
         <Button variant="outlined" onClick={handleCreatePost}
           className={styles.button}>Create Post</Button>
-      </div>
+      </div> */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="basic tabs example">
           <Tab label="Post" {...a11yProps(0)} />
@@ -83,7 +84,7 @@ const AdminPage: React.FC = () => {
           <DataTable
             data={posts}
             togglePublish={postApi.togglePostPublish}
-            deleteData={postApi.deletePost}
+            deleteData={postApi.deletePostByCategory}
             editLink="edit-post"
           />
         </div>

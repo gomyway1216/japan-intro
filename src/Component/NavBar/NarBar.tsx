@@ -14,54 +14,62 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-// import { useAuth } from '../../Provider/AuthProvider';
+import { useAuth } from '../../Provider/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import styles from './NavBar.module.scss';
+import AccountCircle from '@mui/icons-material/AccountCircle';
 // import SearchBar from '../SearchBar/SearchBar';
 
-const pages = [
-  {
-    title: 'Task',
-    link: '/task'
-  },
-  {
-    title: 'Add Task',
-    link: '/task-add'
-  },
-];
-
 const ResponsiveAppBar: FC = () => {
-  const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
-  const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(null);
-  // const { userId, signOut } = useAuth();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const { currentUser, signOut } = useAuth();
+  // const uid = currentUser?.uid;
   const navigate = useNavigate();
   // Add a state to manage the visibility of the search TextField
   const [searchVisible, setSearchVisible] = useState(false);
 
-  // Toggle the visibility state of the TextField when the search icon is clicked
-  const handleToggleSearch = () => {
-    setSearchVisible(!searchVisible);
+  // // Toggle the visibility state of the TextField when the search icon is clicked
+  // const handleToggleSearch = () => {
+  //   setSearchVisible(!searchVisible);
+  // };
+
+  // const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
+  //   setAnchorElNav(event.currentTarget);
+  // };
+  // const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+  //   setAnchorElUser(event.currentTarget);
+  // };
+
+  // const handleNavMenuClick = (link: string) => {
+  //   setAnchorElNav(null);
+  //   navigate(link);
+  // };
+
+  // const handleCloseNavMenu = () => {
+  //   setAnchorElNav(null);
+  // };
+
+  // const handleCloseUserMenu = () => {
+  //   setAnchorElUser(null);
+  // };
+
+  // const handleUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+  //   setAnchorElUser(event.currentTarget);
+  // };
+
+
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
   };
 
-  const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElNav(event.currentTarget);
-  };
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
+  const handleClose = () => {
+    setAnchorEl(null);
   };
 
-  const handleNavMenuClick = (link: string) => {
-    setAnchorElNav(null);
-    navigate(link);
+  const handleCreateClick = () => {
+    navigate('/new-post');
   };
 
-  const handleCloseNavMenu = () => {
-    setAnchorElNav(null);
-  };
-
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
-  };
 
   return (
     <Box className={styles.root}
@@ -77,7 +85,7 @@ const ResponsiveAppBar: FC = () => {
         >
           <Container maxWidth="xl">
             <Toolbar disableGutters>
-              <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
+              {/* <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                 <IconButton
                   size="large"
                   aria-label="account of current user"
@@ -112,7 +120,7 @@ const ResponsiveAppBar: FC = () => {
                     </MenuItem>
                   ))}
                 </Menu>
-              </Box>
+              </Box> */}
               <Typography
                 variant="h5"
                 noWrap
@@ -123,19 +131,40 @@ const ResponsiveAppBar: FC = () => {
                   textDecoration: 'none',
                 }}
               >
-                Task Manager
+                Japan Intro
               </Typography>
-              <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                {pages.map((page) => (
-                  <Button
-                    key={page.title}
-                    onClick={() => handleNavMenuClick(page.link)}
-                    sx={{ my: 2, color: 'white', display: 'block' }}
+              {currentUser && (
+                <div>
+                  <IconButton
+                    size="large"
+                    aria-label="account of current user"
+                    aria-controls="menu-appbar"
+                    aria-haspopup="true"
+                    onClick={handleMenu}
+                    color="inherit"
                   >
-                    {page.title}
-                  </Button>
-                ))}
-              </Box>
+                    <AccountCircle />
+                  </IconButton>
+                  <Menu
+                    id="menu-appbar"
+                    anchorEl={anchorEl}
+                    anchorOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    keepMounted
+                    transformOrigin={{
+                      vertical: 'top',
+                      horizontal: 'right',
+                    }}
+                    open={Boolean(anchorEl)}
+                    onClose={handleClose}
+                  >
+                    <MenuItem onClick={handleCreateClick}>Create</MenuItem>
+                    <MenuItem onClick={handleClose}>Settings</MenuItem>
+                  </Menu>
+                </div>
+              )}
             </Toolbar>
           </Container>
         </AppBar>

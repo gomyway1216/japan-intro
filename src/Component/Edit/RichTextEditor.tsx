@@ -8,25 +8,38 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import styles from './rich-text-editor.module.scss';
 import { Post, RichTextEditorProps } from '../../types';
+import { getPostCategories } from '../../api/post';
+import Box from '@mui/material/Box';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import ImageUpload from '../Image/ImageUpload';
 
 const UPDATE_INTERVAL = 10000;
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, deleteDoc }) => {
+const RichTextEditor: React.FC<RichTextEditorProps> = (props) => {
     const [original, setOriginal] = useState<Post>();
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
+    const [category, setCategory] = useState(props.category || '');
     const [isPublic, setPublic] = useState(false);
-    const [autoSave, setAutoSave] = useState(true);
+    const [autoSave, setAutoSave] = useState(false);
     const [autoSaveBody, setAutoSaveBody] = useState('');
     const [autoSaveTitle, setAutoSaveTitle] = useState('');
     const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState('');
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [intervalId, setIntervalId] = useState<number | null>(null);
+    const [categoryList, setCategoryList] = useState<string[]>([]);
+    const [imageUrl, setImageUrl] = useState<string | undefined>('');
+
+    console.log('categoryList', categoryList);
 
     const titleRef = useRef<string>(title);
     const bodyRef = useRef<string>(body);
     const isPublicRef = useRef<boolean>(isPublic);
+    const categoryRef = useRef<string>(category);
 
     const [status, setStatus] = useState<'idle' | 'updating' | 'deleting'>('idle');
 
@@ -42,21 +55,52 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
         isPublicRef.current = isPublic;
     }, [isPublic]);
 
-    const fetchDoc = async () => {
-        const doc = await getDoc(id);
-        if (doc) {
-            setTitle(doc.title);
-            setBody(doc.body);
-            setPublic(doc.isPublic);
-            setOriginal(doc);
+    useEffect(() => {
+        categoryRef.current = category;
+    }, [category]);
+
+    const fetchPost = async () => {
+        // if id is defined, the rich text editor is expected to load the data from the server, if not, create a new post
+        if (props.postId && props.category) {
+            const doc = await props.getPost(props.postId, props.category);
+            if (doc) {
+                setTitle(doc.title);
+                setBody(doc.body);
+                setPublic(doc.isPublic);
+                setOriginal(doc);
+                setImageUrl(doc.image)
+            } else {
+                const msg = 'Post not found!';
+                setErrorMessage(msg);
+            }
         } else {
-            navigate('/admin');
+            const doc: Post = {
+                id: '',
+                title: '',
+                body: '',
+                isPublic: false,
+                created: new Date(),
+                lastUpdated: new Date(),
+                category: '',
+                image: imageUrl
+            };
+            setOriginal(doc);
         }
     };
 
+    const fetchCategoryList = async () => {
+        const categoryList = await getPostCategories();
+        setCategoryList(categoryList);
+    }
+
     useEffect(() => {
-        fetchDoc();
+        fetchPost();
     }, []);
+
+    useEffect(() => {
+        fetchCategoryList();
+    }, []);
+
 
     const deepCompareBodyAndTitle = (body: string, title: string) => {
         if (autoSaveBody !== body || autoSaveTitle !== title) {
@@ -71,17 +115,19 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
         if (status === 'idle' && autoSave) {
             const interval = window.setInterval(() => {
                 const item: Post = {
-                    id,
+                    id: props.postId!,
                     title: titleRef.current,
                     body: bodyRef.current,
                     isPublic: isPublicRef.current,
                     created: original?.created || new Date(), // update the timestamp
-                    lastUpdated: new Date() // update the timestamp
+                    lastUpdated: new Date(), // update the timestamp
+                    category: categoryRef.current,
+                    image: imageUrl
                 };
                 try {
                     if (deepCompareBodyAndTitle(bodyRef.current, titleRef.current)) {
                         setStatus('updating');
-                        updateDoc(item);
+                        props.updatePost(item);
                         setStatus('idle');
                     }
                 } catch (err: unknown) {
@@ -121,19 +167,25 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
         setPublic(e.target.checked);
     };
 
+
     const handleSave = async () => {
         setStatus('updating');
+        const handleFunction = props.postId ? props.updatePost : props.createPost;
+
         const item: Post = {
-            id,
+            id: props.postId || '',
             title,
             body,
             isPublic,
-            created: original?.created || new Date(), // update the timestamp
-            lastUpdated: new Date() // update the timestamp
+            created: props.postId && original ? original.created : new Date(),
+            lastUpdated: new Date(), // always update the timestamp
+            category,
+            image: imageUrl
         };
+
         try {
-            await updateDoc(item);
-            navigate('/admin');
+            await handleFunction(item);
+            navigate(`/${category}/${props.postId || item.id}`);
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setErrorMessage(err.message);
@@ -144,11 +196,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
         setStatus('idle');
     };
 
+
     const handleClose = async () => {
         setStatus('updating');
         try {
-            await updateDoc(original!);
-            navigate('/admin');
+            await props.updatePost(original!);
+            if (props.postId) {
+                navigate(`/${category}/${props.postId}`);
+            } else {
+                navigate(`/post`);
+            }
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setErrorMessage(err.message);
@@ -161,9 +218,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
 
     const handleDelete = async () => {
         setStatus('deleting');
-        const updateStatus = await deleteDoc!(id);
+        const updateStatus = await props.deletePost(props.postId!, props.category!);
         if (updateStatus) {
-            navigate('/admin');
+            navigate(`/${props.category}/${props.postId}`);
         } else {
             const msg = 'deletion of the post is failing!';
             setErrorMessage(msg);
@@ -179,6 +236,14 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
         setErrorMessage('');
     };
 
+    const handleCategoryChange = (event: SelectChangeEvent) => {
+        setCategory(event.target.value as string);
+    };
+
+    const handleImageUrl = (url: string) => {
+        setImageUrl(url);
+    }
+
     return (
         <div className={styles.root}>
             <div className={styles.subSection}>
@@ -189,18 +254,34 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
                         className={styles.title}
                     />
                 </div>
+                <FormControl fullWidth>
+                    <InputLabel id="category-select-label">Category</InputLabel>
+                    <Select
+                        labelId="category-select-label"
+                        id="category-select"
+                        value={category}
+                        label="Age"
+                        onChange={handleCategoryChange}
+                    >
+                        {categoryList.map((category) => (
+                            <MenuItem value={category}>{category}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
                 <div className={styles.switchWrapper}>
-                    <FormGroup>
-                        <FormControlLabel
-                            className={styles.switch}
-                            control={
-                                <Switch
-                                    checked={autoSave}
-                                    onChange={onAutoSaveSwitchChange}
-                                />
-                            }
-                            label="Auto Save" />
-                    </FormGroup>
+                    {props.postId &&
+                        <FormGroup>
+                            <FormControlLabel
+                                className={styles.switch}
+                                control={
+                                    <Switch
+                                        checked={autoSave}
+                                        onChange={onAutoSaveSwitchChange}
+                                    />
+                                }
+                                label="Auto Save" />
+                        </FormGroup>
+                    }
                     <FormGroup>
                         <FormControlLabel
                             className={styles.switch}
@@ -214,6 +295,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
                     </FormGroup>
                 </div>
             </div>
+            <ImageUpload handleImageUrl={handleImageUrl} originalImageUrl={imageUrl} />
             <div className={styles.toolBar}>
                 <EditorToolbar />
             </div>
@@ -237,7 +319,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
                     className={styles.button}>
                     Close without Saving
                 </Button>
-                <Button
+                {props.postId && <Button
                     variant="outlined"
                     color="error"
                     onClick={() => setDeleteDialogOpen(true)}
@@ -245,6 +327,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ id, getDoc, updateDoc, 
                 >
                     Delete
                 </Button>
+                }
             </div>
             <DeleteItemDialog open={deleteDialogOpen}
                 onClose={handleDeleteDialogClose} callback={handleDelete}

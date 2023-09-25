@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 import { ReactNode } from 'react';
 
+// Interface that stores the post object to be displayed on the page
 export interface Post {
   id: string;
   title: string;
@@ -8,26 +9,53 @@ export interface Post {
   isPublic: boolean;
   created: Date;
   lastUpdated: Date;
+  category: string;
+  image: string | undefined;
 }
 
-export interface FirestorePost {
+export interface PostListItemProps extends Post {
+  handleClick: (id: string) => void;
+};
+
+export interface PartialPost {
   id: string;
+  title: string;
+  body: string;
+  created: Date;
+  lastUpdated: Date;
+  category: string;
+}
+
+// Interface that stores the post data stored in Firestore
+export interface FirestorePost {
   title: string;
   body: string;
   isPublic: boolean;
   created: Timestamp;
   lastUpdated: Timestamp;
+  image: string | undefined;
 }
 
 export interface ParamTypes {
   id: string;
 }
 
+export interface PostEditorProps {
+  postId: string | undefined;
+  category: string | undefined;
+  getPost: (id: string, category: string) => Promise<Post | null>;
+  createPost: (post: Post) => Promise<string>;
+  updatePost: (post: Post) => Promise<void>;
+  deletePost: (id: string, category: string) => Promise<boolean>;
+}
+
 export interface RichTextEditorProps {
-  id: string;
-  getDoc: (id: string) => Promise<Post | null>;
-  updateDoc: (item: Post) => Promise<void>;
-  deleteDoc: (id: string) => Promise<boolean>;
+  postId: string | undefined;
+  category: string | undefined;
+  getPost: (id: string, category: string) => Promise<Post | null>;
+  createPost: (post: Post) => Promise<string>;
+  updatePost: (post: Post) => Promise<void>;
+  deletePost: (id: string, category: string) => Promise<boolean>;
 }
 
 export interface InstantMessageProps {
@@ -36,7 +64,7 @@ export interface InstantMessageProps {
 }
 
 export interface RichTextDisplayProps {
-  getApi: (id: string) => Promise<{ title: string, created: string, body: string }>;
+  post: Post;
 }
 
 export interface RichTextEditingData {
@@ -52,9 +80,10 @@ export interface DataTableProps {
     created: Date;
     lastUpdated: Date;
     isPublic: boolean;
+    category: string;
   }>;
-  togglePublish: (id: string, isPublic: boolean) => Promise<boolean>;
-  deleteData: (id: string) => Promise<boolean>;
+  togglePublish: (id: string, category: string, isPublic: boolean) => Promise<boolean>;
+  deleteData: (id: string, category: string) => Promise<boolean>;
   editLink: string;
 }
 
@@ -83,4 +112,8 @@ export interface IUser {
 
 export interface AuthProviderProps {
   children: ReactNode;
+}
+export interface ImageUploadProps {
+  originalImageUrl: string | undefined;
+  handleImageUrl: (url: string) => void;
 }

@@ -6,55 +6,25 @@ import * as util from '../../util/util';
 import styles from './rich-text-display.module.scss';
 import { RichTextDisplayProps, RichTextEditingData } from '../../types'
 
-const RichTextDisplay: FC<RichTextDisplayProps> = (props) => {
-  const [loading, setLoading] = useState(true);
-  const [formattedDate, setFormattedDate] = useState<string | undefined>();
-  const { id } = useParams<{ id: string }>();
-  const [data, setData] = useState<RichTextEditingData | undefined>();
-  const navigate = useNavigate();
+const RichTextDisplay: FC<RichTextDisplayProps> = ({ post }) => {
+  const { id, title, body, created, lastUpdated, category, image } = post;
 
-  const getData = async () => {
-    if (id) {
-      const result = await props.getApi(id);
-      setData(result);
+  const purifiedBody = DOMPurify.sanitize(body, {
+    ADD_TAGS: ["iframe"],
+    ADD_ATTR: ['allow', 'allowfullscreen', 'frameborder', 'scrolling']
+  });
 
-      // Create a Date object from the result.created string
-      const createdDate = new Date(result.created);
-
-      const formattedCreatedDate = util.formatJapaneseDate(createdDate);
-      setFormattedDate(formattedCreatedDate);
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getData();
-  }, [id]); // Add id to the dependency array
-
-  if (loading) {
-    return (
-      <Backdrop open={true} style={{
-        display: loading
-          ? 'flex' : 'none'
-      }}>
-        <CircularProgress style={{ 'color': 'white' }} />
-      </Backdrop>
-    );
-  }
-
-  if (!data || !formattedDate) {
-    return null;
-  }
+  // console.log('body: ', body)
+  // console.log('purifiedBody: ', purifiedBody)
 
   return (
     <div className={styles.root}>
-      <div className={styles.title}>{data.title}</div>
-      <div className={styles.date}>{formattedDate}</div>
+      <div className={styles.title}>{title}</div>
+      <div className={styles.category}>{category}</div>
+      <img src={image} alt="Post image" />
+      <div className={styles.date}>{util.formatDate(created)}</div>
       <div className={styles.body}
-        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.body) }} />
-      <div className={styles.homeButton}>
-        <Button variant="outlined" onClick={() => navigate('/')}>Go back</Button>
-      </div>
+        dangerouslySetInnerHTML={{ __html: purifiedBody }} />
     </div>
   );
 };
