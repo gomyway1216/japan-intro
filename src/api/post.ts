@@ -2,6 +2,7 @@ import * as fbConnect from './firebaseConnect';
 import {
   addDoc,
   collection,
+  collectionGroup,
   Timestamp,
   deleteDoc,
   doc,
@@ -47,32 +48,50 @@ const getAllCategoryPosts = async (isPublic?: boolean): Promise<Post[]> => {
   return combinedPosts;
 };
 
-const getValues = async (category: string, isPublic: boolean, pageNumber: number, limitNumber: number,
+const getPosts = async (category: string, isPublic: boolean, pageNumber: number, limitNumber: number,
   lastVisibleDocTimestamps: { [key: string]: number },
   setLastVisibleDocTimestamps: (val: { [key: string]: number }) => void): Promise<Post[]> => {
   const startingPage = pageNumber - 1;
-
   const lastVisibleDocTimestampKey = `lastVisible_${category}_${startingPage}`;
   let lastVisibleDocTimestampSeconds = lastVisibleDocTimestamps[lastVisibleDocTimestampKey];
   let q;
 
-  if (startingPage === 0 || !lastVisibleDocTimestampSeconds) {
-
-    q = query(
-      collection(getDbAccess(), `post/${category}/posts`),
-      where('isPublic', '==', isPublic),
-      orderBy('lastUpdated', 'desc'),
-      limit(limitNumber)
-    );
+  if (category === 'all') {
+    if (startingPage === 0 || !lastVisibleDocTimestampSeconds) {
+      q = query(
+        collectionGroup(getDbAccess(), 'posts'),
+        where('isPublic', '==', isPublic),
+        orderBy('lastUpdated', 'desc'),
+        limit(limitNumber)
+      );
+    } else {
+      let lastVisibleTimestamp = Timestamp.fromDate(new Date(Number(lastVisibleDocTimestampSeconds) * 1000));
+      q = query(
+        collectionGroup(getDbAccess(), 'posts'),
+        where('isPublic', '==', isPublic),
+        orderBy('lastUpdated', 'desc'),
+        startAfter(lastVisibleTimestamp),
+        limit(limitNumber)
+      );
+    }
   } else {
-    let lastVisibleTimestamp = Timestamp.fromDate(new Date(Number(lastVisibleDocTimestampSeconds) * 1000));
-    q = query(
-      collection(getDbAccess(), `post/${category}/posts`),
-      where('isPublic', '==', isPublic),
-      orderBy('lastUpdated', 'desc'),
-      startAfter(lastVisibleTimestamp),
-      limit(limitNumber)
-    );
+    if (startingPage === 0 || !lastVisibleDocTimestampSeconds) {
+      q = query(
+        collection(getDbAccess(), `post/${category}/posts`),
+        where('isPublic', '==', isPublic),
+        orderBy('lastUpdated', 'desc'),
+        limit(limitNumber)
+      );
+    } else {
+      let lastVisibleTimestamp = Timestamp.fromDate(new Date(Number(lastVisibleDocTimestampSeconds) * 1000));
+      q = query(
+        collection(getDbAccess(), `post/${category}/posts`),
+        where('isPublic', '==', isPublic),
+        orderBy('lastUpdated', 'desc'),
+        startAfter(lastVisibleTimestamp),
+        limit(limitNumber)
+      );
+    }
   }
 
   const docs = await getDocs(q);
@@ -228,5 +247,5 @@ export {
   togglePostPublish,
   getPostByCategory,
   deletePostByCategory,
-  getValues
+  getPosts
 }  
