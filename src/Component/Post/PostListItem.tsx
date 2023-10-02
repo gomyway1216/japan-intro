@@ -40,7 +40,7 @@ const PostListItem = forwardRef<HTMLDivElement, PostListItemProps>(
               style={{ margin: "8px 0", marginTop: "-2px", fontSize: "22px" }}
             >
               <div
-                onClick={() => handleClick(id)}
+                onClick={() => handleClick(id, category)}
                 style={{
                   cursor: 'pointer',
                   fontFamily: "Poppins",
@@ -53,7 +53,7 @@ const PostListItem = forwardRef<HTMLDivElement, PostListItemProps>(
             </h3>
             <div
               className="resp_summary"
-              onClick={() => handleClick(id)}
+              onClick={() => handleClick(id, category)}
               style={{
                 cursor: 'pointer',
                 fontSize: "15.25px",
@@ -68,7 +68,7 @@ const PostListItem = forwardRef<HTMLDivElement, PostListItemProps>(
               {bodyText.slice(0, 190) + "..."}
             </div>
           </div>
-          <div onClick={() => handleClick(id)}
+          <div onClick={() => handleClick(id, category)}
             style={{
               cursor: 'pointer'
             }}

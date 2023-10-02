@@ -14,7 +14,7 @@ export interface Post {
 }
 
 export interface PostListItemProps extends Post {
-  handleClick: (id: string) => void;
+  handleClick: (id: string, category: string) => void;
 };
 
 export interface PartialPost {

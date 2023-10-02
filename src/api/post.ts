@@ -112,12 +112,16 @@ const getPosts = async (category: string, isPublic: boolean, pageNumber: number,
   return docs.docs.map(doc => {
     const data = doc.data();
 
+    // Determine the post's category based on the reference's path
+    // This assumes a path structure of "post/{category}/posts/{postId}"
+    const postCategory = category !== 'all' ? category : doc.ref.path.split('/')[1];
+
     return {
       id: doc.id,
       title: data.title,
       body: data.body,
       isPublic: data.isPublic,
-      category: data.category,
+      category: postCategory,
       image: data.image,
       created: data.created?.toDate(),
       lastUpdated: new Date(data.lastUpdated.seconds * 1000) // Convert to JavaScript Date object
