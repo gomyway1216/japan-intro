@@ -5,9 +5,10 @@ import * as postApi from '../../api/post';
 import SuggestionBar from './SuggestionBar';
 import { useParams, useNavigate } from 'react-router-dom';
 import { usePosts } from '../../Provider/PostsProvider';
+import { useInView } from 'react-intersection-observer';
 
 const CategoryPostPage = () => {
-  const { category } = useParams<{ category: string }>();
+  const { category: routeCategory } = useParams<{ category: string }>();
   const navigate = useNavigate();
 
   // Getting values and functions from the context
@@ -24,7 +25,20 @@ const CategoryPostPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true); // To determine if there are more posts to fetch
-  const [tabValue, setTabValue] = useState<string | undefined>(category);
+  const category = routeCategory || 'all';
+  const [tabValue, setTabValue] = useState<string>(category);
+  // const observerRef = useRef(null);
+
+  // Setup intersection observer
+  const [ref, inView] = useInView({
+    threshold: 0.1, // Adjust this value as per your need. 0.1 means 10% of the target is visible.
+    triggerOnce: false,  // Observe continuously, not just once.
+  });
+
+  const resetScrollPosition = () => {
+    window.scrollTo(0, 0);
+  }
+
 
   const getPageLimitBasedOnScreenSize = () => {
     return 5;
@@ -41,7 +55,7 @@ const CategoryPostPage = () => {
     setIsLoading(true);
     const pageLimit = getPageLimitBasedOnScreenSize();
     const currentCategoryPage = currentPageByCategory[category as string] || 1;
-    const fetchedPosts = await postApi.getValues(category as string, true, currentCategoryPage, pageLimit, lastVisibleDocTimestamps,
+    const fetchedPosts = await postApi.getPosts(category as string, true, currentCategoryPage, pageLimit, lastVisibleDocTimestamps,
       setLastVisibleDocTimestamps);
 
     if (fetchedPosts.length === 0) {
@@ -64,9 +78,13 @@ const CategoryPostPage = () => {
 
   // When the component mounts or when category changes:
   useEffect(() => {
+    resetScrollPosition();
+
     if (!postsByCategory[category as string]) {
+      setHasMore(true);
       fetchPosts();
     } else {
+      setHasMore(postsByCategory[category].length > 0); // If there's data, set it based on the length
       window.scrollTo(0, scrollPosition);
     }
   }, [category]);
@@ -74,15 +92,15 @@ const CategoryPostPage = () => {
   // Infinite scroll logic
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 10 || isLoading || !hasMore) {
-        return;
+      // We integrate inView into the scroll logic
+      if (inView && !isLoading && hasMore) {
+        fetchPosts();
       }
-      fetchPosts();
     };
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [isLoading, hasMore, postsByCategory, category]);
+  }, [inView, isLoading, hasMore, category]); // Note: we added inView here
 
   return (
     <div
@@ -114,7 +132,42 @@ const CategoryPostPage = () => {
             marginTop: "22px"
           }}
         >
-          {postsByCategory[category as string]?.map((item) => {
+          {postsByCategory[category as string]?.map((item, index) => {
+            const totalPosts = postsByCategory[category as string].length;
+            if (totalPosts - 3 === index) {
+              return (
+                <PostListItem
+                  key={item.id}
+                  ref={ref}
+                  id={item.id}
+                  title={item.title}
+                  body={item.body}
+                  isPublic={item.isPublic}
+                  created={item.created}
+                  lastUpdated={item.lastUpdated}
+                  category={item.category}
+                  image={item.image}
+                  handleClick={handleClickPost}
+                />
+              );
+            } else {
+              return (
+                <PostListItem
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  body={item.body}
+                  isPublic={item.isPublic}
+                  created={item.created}
+                  lastUpdated={item.lastUpdated}
+                  category={item.category}
+                  image={item.image}
+                  handleClick={handleClickPost}
+                />
+              );
+            }
+          })}
+          {/* {postsByCategory[category as string]?.map((item) => {
             return (
               <PostListItem
                 key={item.id}
@@ -129,7 +182,7 @@ const CategoryPostPage = () => {
                 handleClick={handleClickPost}
               />
             );
-          })}
+          })} */}
           {isLoading && <p>Loading more posts...</p>}
         </div>
       </div>
