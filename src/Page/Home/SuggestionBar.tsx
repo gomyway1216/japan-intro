@@ -27,6 +27,11 @@ export default function SuggestionBar({ activeTab, setActiveTab }:
     <div
       className="hide_scroll"
       style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+        paddingTop: '20px',
+        backgroundColor: '#FFFFFF',
         display: "flex",
         flexDirection: "row",
         alignItems: "center",
@@ -35,9 +40,8 @@ export default function SuggestionBar({ activeTab, setActiveTab }:
         gap: "28px",
         width: "90%",
         marginRight: "auto",
-        marginBottom: "12px",
+        paddingBottom: "8px",
         overflowX: "auto",
-        marginTop: "12px",
       }}
     >
       <>
