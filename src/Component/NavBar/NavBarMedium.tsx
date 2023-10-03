@@ -1,32 +1,52 @@
 import React, { FC, useState } from 'react';
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
   Container,
   IconButton,
+  InputBase,
   Menu,
   MenuItem,
   Toolbar,
-  Tooltip,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAuth } from '../../Provider/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import styles from './NavBar.module.scss';
 import AccountCircle from '@mui/icons-material/AccountCircle';
-// import SearchBar from '../SearchBar/SearchBar';
+import { Theme } from '@mui/material/styles';
 
 const ResponsiveAppBar: FC = () => {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const { currentUser, signOut } = useAuth();
-  // const uid = currentUser?.uid;
-  const navigate = useNavigate();
-  // Add a state to manage the visibility of the search TextField
   const [searchVisible, setSearchVisible] = useState(false);
+  const { currentUser } = useAuth();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const navigate = useNavigate();
+
+  // Inside your component function:
+  const theme = useTheme();  // <-- Import useTheme from MUI and use it to get the theme object.
+
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
+  const handleSearchIconClick = () => {
+    setSearchVisible(!searchVisible);
+  };
+
+  const getStyles = (searchVisible: boolean, theme: Theme): Record<string, any> => ({
+    width: searchVisible ? '100%' : '0ch',
+    '&:focus': {
+      width: searchVisible ? '20ch' : '100%',
+    },
+    transition: theme.transitions.create('width'),
+    marginRight: theme.spacing(1),
+    [theme.breakpoints.up('md')]: {
+      width: searchVisible ? '20ch' : '0ch',
+    }
+  });
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -40,33 +60,25 @@ const ResponsiveAppBar: FC = () => {
     navigate('/new-post');
   };
 
-
   return (
-    <Box className={styles.root}
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        // paddingTop: (theme) => theme.mixins.toolbar.minHeight,
-      }}
-    >
-      <Box>
-        <AppBar className={styles.navBar}
-          position="static"
-        >
-          <Container maxWidth="xl">
-            <Toolbar disableGutters>
+    <AppBar position="static" color="default">
+      <Container maxWidth="xl">
+        <Toolbar disableGutters>
+          {!searchVisible && (
+            <>
               <Typography
                 variant="h5"
                 noWrap
-                component="a"
-                href="/"
-                sx={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                }}
+                component="span"
+                style={{ flexGrow: 1, cursor: 'pointer' }}
+                onClick={handleLogoClick}
               >
                 Japan Intro
               </Typography>
+
+              <IconButton color="inherit" onClick={handleSearchIconClick}>
+                <SearchIcon />
+              </IconButton>
               {currentUser && (
                 <div>
                   <IconButton
@@ -99,28 +111,31 @@ const ResponsiveAppBar: FC = () => {
                   </Menu>
                 </div>
               )}
-            </Toolbar>
-          </Container>
-        </AppBar>
-      </Box>
-      {/* Conditionally render the TextField below the AppBar based on the state */}
-      {searchVisible && (
-        <Box
-          sx={{
-            borderBottom: 1,
-            borderColor: 'blue',
-            flexGrow: 1,
-            display: { xs: 'flex', md: 'none' }
-          }}
-        >
-          {/* <SearchBar
-            color='white'
-            characterColor='black'
-            callback={() => setSearchVisible(false)}
-          /> */}
-        </Box>
-      )}
-    </Box>
+            </>
+          )}
+
+          {searchVisible && (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <IconButton color="inherit" onClick={handleSearchIconClick}>
+                <SearchIcon />
+              </IconButton>
+              <InputBase
+                placeholder="Search…"
+                inputProps={{ 'aria-label': 'search' }}
+                sx={getStyles(searchVisible, theme)}
+              />
+            </Box>
+          )}
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }
+
 export default ResponsiveAppBar;
