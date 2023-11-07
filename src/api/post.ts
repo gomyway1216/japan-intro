@@ -18,7 +18,7 @@ import {
   orderBy,
   startAfter
 } from 'firebase/firestore';
-import { Post, PartialPost, FirestorePost } from '../types';
+import { Post, PartialPost, FirestorePost, Filters, Sort } from '../types';
 
 export const getDbAccess = (): Firestore => {
   return fbConnect.exportDbAccess();
@@ -47,6 +47,8 @@ const getAllCategoryPosts = async (isPublic?: boolean): Promise<Post[]> => {
 
   return combinedPosts;
 };
+
+// TODO: write a function with the pagenation which matches to the number of posts in the admin page instead of above way
 
 const getPosts = async (category: string, isPublic: boolean, pageNumber: number, limitNumber: number,
   lastVisibleDocTimestamps: { [key: string]: number },
@@ -129,6 +131,55 @@ const getPosts = async (category: string, isPublic: boolean, pageNumber: number,
   });
 }
 
+const getFilteredSortedPosts = async (
+  filters: Filters,
+  sort: Sort,
+  pageNumber: number,
+  limitNumber: number,
+  lastVisibleDoc?: DocumentSnapshot
+): Promise<{ posts: Post[], newLastVisibleDoc: DocumentSnapshot | undefined }> => {
+  let q = collectionGroup(getDbAccess(), 'posts');
+
+  // Applying filters
+  for (const [key, value] of Object.entries(filters)) {
+    q = query(q, where(key, '==', value));
+  }
+
+  // Apply sorting
+  q = query(q, orderBy(sort.field, sort.direction));
+
+  // Pagination
+  if (pageNumber !== 1 && lastVisibleDoc) {
+    q = query(q, startAfter(lastVisibleDoc));
+  }
+  q = query(q, limit(limitNumber));
+
+  const docs = await getDocs(q);
+  if (docs.empty) {
+    console.log('No more documents!');
+    return { posts: [], newLastVisibleDoc: undefined };
+  }
+
+  const newLastVisibleDoc = docs.docs[docs.docs.length - 1];
+
+  return {
+    posts: docs.docs.map(doc => {
+      const data = doc.data();
+      const postCategory = filters.category || doc.ref.path.split('/')[1];
+      return {
+        id: doc.id,
+        title: data.title,
+        body: data.body,
+        isPublic: data.isPublic,
+        category: postCategory,
+        image: data.image,
+        created: data.created?.toDate(),
+        lastUpdated: new Date(data.lastUpdated.seconds * 1000)
+      };
+    }),
+    newLastVisibleDoc
+  };
+};
 
 
 const getPostsByCategory = async (category: string, isPublic?: boolean): Promise<Post[]> => {
@@ -251,5 +302,6 @@ export {
   togglePostPublish,
   getPostByCategory,
   deletePostByCategory,
-  getPosts
+  getPosts,
+  getFilteredSortedPosts
 }  

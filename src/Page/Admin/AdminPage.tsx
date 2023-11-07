@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import * as postApi from '../../api/post';
 import DataTable from '../../Component/Table/DataTable';
 import styles from './admin-page.module.scss';
-import { Post, TabPanelProps } from '../../types';
+import { Post, TabPanelProps, Filters, Sort } from '../../types';
+import {
+  DocumentSnapshot
+} from 'firebase/firestore';
 
 
 const TabPanel = ({ children, value, index, ...other }: TabPanelProps) => {
@@ -37,6 +40,7 @@ const AdminPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<Array<Post>>([]);
   const [tabValue, setTabValue] = useState(0);
+  const [lastVisibleDoc, setLastVisibleDoc] = useState<DocumentSnapshot | undefined>(undefined);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -44,13 +48,25 @@ const AdminPage: React.FC = () => {
 
   const getPosts = async () => {
     // const ps = await postApi.getPosts(0);
-    const ps = await postApi.getAllCategoryPosts();
-    setPosts(ps);
+    // const ps = await postApi.getAllCategoryPosts();
+    // setPosts(ps);
+
+    // For the purpose of the example, I'm using default filters and sorting
+    const filters: Filters = {
+      isPublic: true
+    };
+    const sort: Sort = {
+      field: 'created',
+      direction: 'desc'
+    };
+
+    const result = await postApi.getFilteredSortedPosts(filters, sort, 1, 10, lastVisibleDoc);
+    setPosts(result.posts);
+    setLastVisibleDoc(result.newLastVisibleDoc);
   };
 
   useEffect(() => {
-    getPosts();
-    setLoading(false);
+    getPosts().then(() => setLoading(false));
   }, []);
 
   // const handleCreatePost = async () => {

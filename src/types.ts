@@ -117,3 +117,14 @@ export interface ImageUploadProps {
   originalImageUrl: string | undefined;
   handleImageUrl: (url: string) => void;
 }
+
+export interface Filters {
+  category?: string;
+  isPublic?: boolean;
+  [key: string]: string | number | boolean | undefined;  // other possible filters
+}
+
+export interface Sort {
+  field: string;
+  direction: 'asc' | 'desc';
+}

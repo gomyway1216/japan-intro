@@ -23,6 +23,10 @@ const DataTable: FC<DataTableProps> = (props) => {
   const [deleteDataCategory, setDeleteDataCategory] = useState('');
   const navigate = useNavigate();
 
+  useEffect(() => {
+    setData(props.data);
+  }, [props.data]);
+
   const columns = [
     { field: 'title', headerName: 'Title', flex: 1 },
     { field: 'category', headerName: 'Category', flex: 1 },
